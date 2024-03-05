@@ -21,7 +21,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   handleConnection(client: Socket, ...args: any[]) {
     const { sockets } = this.io.sockets;
-
     this.logger.log(`Client id: ${client.id} connected`);
     this.logger.debug(`Number of connected clients: ${sockets.size}`);
   }
@@ -30,6 +29,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   joinRoom(socket: Socket, roomId: string) {
     socket.join(roomId);
     this.logger.log(`Client id: ${socket.id} joined room: ${roomId}`);
+
+    const welcomeMessage: ChatMessage = {
+      autorDaMensagem: 'System',
+      message: 'Bem-vindo ao chat! Lembrando que este chat é temporário. Suas mensagens serão perdidas ao sair ou atualizar a página.',
+      room: socket.id,
+      time: new Date().toLocaleTimeString(),
+    };
+    socket.emit('message', welcomeMessage);
+
   }
 
   handleDisconnect(client: any) {

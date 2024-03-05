@@ -47,6 +47,9 @@ export default function Chat({ socket, username, room }: ChatProps) {
                     {messages.map((msg: any, index: any) => (
                         <div key={index} className={`flex gap-3 p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
                             <div className='flex flex-col'>
+                                <span className={`text-accent-foreground text-xs pt-1 flex ${username === msg.autorDaMensagem ? "justify-end" : "justify-start"} `}>
+                                    {msg.autorDaMensagem}
+                                </span>
                                 <span className={`${username === msg.autorDaMensagem ? 'bg-primary text-primary-foreground hover:bg-primary/90 rounded-tr-sm' : 'bg-secondary rounded-sm hover:bg-secondary/90'} p-3 rounded-sm`}>
                                     {msg.message}
                                 </span>

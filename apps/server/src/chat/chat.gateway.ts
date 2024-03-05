@@ -2,6 +2,13 @@ import { Logger } from '@nestjs/common';
 import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
+interface ChatMessage {
+  autorDaMensagem: string;
+  message: string;
+  room: string;
+  time: string;
+}
+
 @WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
@@ -19,14 +26,27 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.logger.debug(`Number of connected clients: ${sockets.size}`);
   }
 
+  @SubscribeMessage('join_room')
+  joinRoom(socket: Socket, roomId: string) {
+    socket.join(roomId);
+    this.logger.log(`Client id: ${socket.id} joined room: ${roomId}`);
+  }
+
   handleDisconnect(client: any) {
-    this.logger.log(`Cliend id:${client.id} disconnected`);
+    this.logger.log(`Client id: ${client.id} disconnected `);
   }
 
   @SubscribeMessage("message")
-  handleMessage(client: any, data: any) {
+  handleMessage(client: Socket, data: ChatMessage) {
+    let message = data;
     this.logger.log(`Message received from client id: ${client.id}`);
-    this.logger.debug(`Payload: ${data}`);
-    this.io.emit("message", data);
+    this.logger.log(`Author: ${message.autorDaMensagem}`);
+    this.logger.debug(`Payload: ${JSON.stringify(data)}`);
+
+    if (message.room) {
+      this.io.to(message.room).emit("message", data);
+    } else {
+      this.logger.warn(`Client id: ${client.id} is not in any room`);
+    }
   }
 }

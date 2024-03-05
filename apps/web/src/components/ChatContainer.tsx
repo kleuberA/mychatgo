@@ -2,30 +2,32 @@
 
 import { useState } from "react"
 import Chat from "./Chat";
+import { io } from "socket.io-client";
 
 interface ChatContainerProps {
 
 }
+
+const socket = io('http://localhost:4000');
+
 export default function ChatContainer(props: ChatContainerProps) {
 
     const [username, setUsername] = useState<string>("");
     const [room, setRoom] = useState<string>("");
-    const [addInfo, setAddInfo] = useState<boolean>(true);
+    const [showChat, setshowChat] = useState<boolean>(false);
     const [disabled, setDisabled] = useState<boolean>(true);
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
-
-        if (username.trim().length != 0 || room.trim().length != 0) {
-            setAddInfo(true);
-            console.log(username, room);
-            return;
+        if (username !== "" && room !== "") {
+            socket.emit('join_room', room);
+            setshowChat(true);
         }
     }
 
     return (
         <>
-            {!addInfo && (
+            {!showChat && (
                 <section className="w-full h-screen flex flex-col bg-zinc-950 gap-3 justify-center items-center">
                     <h1 className="font-bold font-mono text-4xl text-white">My Chat Go</h1>
                     <div className="w-[30dvw] h-[40dvh] bg-zinc-800 rounded-md p-5">
@@ -57,8 +59,8 @@ export default function ChatContainer(props: ChatContainerProps) {
                     </div>
                 </section>
             )}
-            {addInfo && (
-                <Chat />
+            {showChat && (
+                <Chat socket={socket} username={username} room={room} />
             )}
         </>
     )

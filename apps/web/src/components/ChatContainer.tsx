@@ -3,6 +3,9 @@
 import { useState } from "react"
 import Chat from "./Chat";
 import { io } from "socket.io-client";
+import NavBar from "./Navbar";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 interface ChatContainerProps {
 
@@ -28,34 +31,35 @@ export default function ChatContainer(props: ChatContainerProps) {
     return (
         <>
             {!showChat && (
-                <section className="w-full h-screen flex flex-col bg-zinc-950 gap-3 justify-center items-center">
-                    <h1 className="font-bold font-mono text-4xl text-white">My Chat Go</h1>
-                    <div className="w-[30dvw] h-[40dvh] bg-zinc-800 rounded-md p-5">
-                        <form
-                            onSubmit={(e) => handleSubmit(e)}
-                            action=""
-                            className="flex flex-col justify-center w-full gap-5 h-full"
-                        >
-                            <input
-                                type="text"
-                                placeholder="Username"
-                                className="p-2 rounded-sm outline-none bg-zinc-500 text-white"
-                                onChange={(e) => { setUsername(e.target.value) }}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Room"
-                                className="p-2 rounded-sm outline-none bg-zinc-500 text-white"
-                                onChange={(e) => { setRoom(e.target.value) }}
-                            />
-                            <button
-                                disabled={room === "" || username === "" ? true : false}
-                                type="submit"
-                                className="bg-zinc-500 p-2 rounded-md disabled:bg-zinc-700 text-white hover:bg-zinc-600 transition-all duration-300 ease-in-out disabled:cursor-not-allowed"
+                <section className="w-full h-[calc(100dvh_-_5rem)] bg-background">
+                    <NavBar />
+                    <div className="w-full h-full flex flex-col gap-3 justify-center items-center">
+                        <h1 className="font-bold font-mono text-4xl text-primary">My Chat Go</h1>
+                        <div className="w-[30dvw] h-[40dvh] bg-background border border-border rounded-md p-5">
+                            <form
+                                onSubmit={(e) => handleSubmit(e)}
+                                action=""
+                                className="flex flex-col justify-center w-full gap-5 h-full"
                             >
-                                Join
-                            </button>
-                        </form>
+                                <Input
+                                    type="text"
+                                    placeholder="Username"
+                                    onChange={(e) => { setUsername(e.target.value) }}
+                                />
+                                <Input
+                                    type="text"
+                                    placeholder="Room"
+                                    onChange={(e) => { setRoom(e.target.value) }}
+                                />
+                                <Button
+                                    disabled={room === "" || username === "" ? true : false}
+                                    type="submit"
+                                    className="transition-all duration-300 ease-in-out disabled:cursor-not-allowed"
+                                >
+                                    Join Room
+                                </Button>
+                            </form>
+                        </div>
                     </div>
                 </section>
             )}

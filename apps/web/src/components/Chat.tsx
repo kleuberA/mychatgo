@@ -66,7 +66,12 @@ export default function Chat({ socket, username, room }: ChatProps) {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <Button size="icon" onClick={sendMessage}> <PaperPlaneIcon /> </Button>
+                    <Button
+                        disabled={newMessage === ''}
+                        size="icon"
+                        onClick={sendMessage}>
+                        <PaperPlaneIcon />
+                    </Button>
                 </div>
             </div>
 

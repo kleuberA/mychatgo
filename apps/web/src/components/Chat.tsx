@@ -11,8 +11,6 @@ interface ChatProps {
     username: string;
     room: string;
 }
-
-
 export default function Chat({ socket, username, room }: ChatProps) {
     const [messages, setMessages] = useState<any>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -39,13 +37,18 @@ export default function Chat({ socket, username, room }: ChatProps) {
         }
     };
 
+    const handleDeleteMessage = () => { }
+
     return (
         <div>
             <NavBar />
             <div className="w-full h-[calc(100dvh_-_5rem)] flex flex-col">
                 <div className='flex-1 w-full h-full overflow-y-scroll p-4' >
                     {messages.map((msg: any, index: any) => (
-                        <div key={index} className={`flex gap-3 p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
+                        <div
+                            onDoubleClick={() => handleDeleteMessage()}
+                            key={index}
+                            className={`flex gap-3 p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
                             <div className='flex flex-col'>
                                 <span className={`text-accent-foreground text-xs pt-1 flex ${username === msg.autorDaMensagem ? "justify-end" : "justify-start"} `}>
                                     {msg.autorDaMensagem}
@@ -62,6 +65,11 @@ export default function Chat({ socket, username, room }: ChatProps) {
                 </div>
                 <div className="flex flex-row gap-3 p-3" >
                     <Input
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                                sendMessage();
+                            }
+                        }}
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
@@ -74,7 +82,6 @@ export default function Chat({ socket, username, room }: ChatProps) {
                     </Button>
                 </div>
             </div>
-
         </div>
     );
 };

@@ -11,9 +11,12 @@ interface ChatMessage {
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+
   private readonly logger = new Logger(ChatGateway.name);
 
   @WebSocketServer() io: Server;
+
+  private messages: ChatMessage[] = [];
 
   afterInit() {
     this.logger.log("Initialized");
@@ -38,6 +41,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     };
     socket.emit('message', welcomeMessage);
 
+    const existingMessages = this.messages.filter(msg => msg.room === roomId);
+    existingMessages.forEach(msg => socket.emit('message', msg));
   }
 
   handleDisconnect(client: any) {
@@ -50,6 +55,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.logger.log(`Message received from client id: ${client.id}`);
     this.logger.log(`Author: ${message.autorDaMensagem}`);
     this.logger.debug(`Payload: ${JSON.stringify(data)}`);
+
+    this.messages.push(message);
 
     if (message.room) {
       this.io.to(message.room).emit("message", data);

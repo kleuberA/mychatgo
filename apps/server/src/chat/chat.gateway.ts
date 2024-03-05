@@ -43,6 +43,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     const existingMessages = this.messages.filter(msg => msg.room === roomId);
     existingMessages.forEach(msg => socket.emit('message', msg));
+    this.logger.log(`Messages id: ${existingMessages.forEach(msg => socket.emit('message', msg))}`);
   }
 
   handleDisconnect(client: any) {

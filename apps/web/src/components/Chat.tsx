@@ -1,11 +1,11 @@
 "use client"
 import { PaperPlaneIcon } from '@radix-ui/react-icons';
 import React, { useState, useEffect, useCallback } from 'react';
+import { WarningCircle } from '@phosphor-icons/react';
 import { Socket } from 'socket.io-client';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import NavBar from './Navbar';
-import { WarningCircle } from '@phosphor-icons/react';
 
 interface ChatProps {
     socket: Socket;
@@ -20,7 +20,6 @@ export default function Chat({ socket, username, room }: ChatProps) {
         socket.on('message', (message) => {
             setMessages([...messages, message]);
         });
-        console.log(messages);
 
         socket.on('delete_message', (deletedMessage) => {
             setMessages((prevMessages: any) => {
@@ -65,7 +64,6 @@ export default function Chat({ socket, username, room }: ChatProps) {
                     }
                     return msg;
                 });
-                console.log(updatedMessages, 'updatedMessages');
                 socket.emit('message', updatedMessages);
                 return updatedMessages;
             });

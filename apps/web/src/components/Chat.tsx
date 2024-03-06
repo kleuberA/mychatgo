@@ -1,20 +1,30 @@
 "use client"
-import { PaperPlaneIcon } from '@radix-ui/react-icons';
+import { DotsHorizontalIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
 import React, { useState, useEffect, useCallback } from 'react';
 import { WarningCircle } from '@phosphor-icons/react';
 import { Socket } from 'socket.io-client';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import NavBar from './Navbar';
+import { motion } from 'framer-motion';
 
 interface ChatProps {
     socket: Socket;
     username: string;
     room: string;
 }
+
+const variants = {
+    initial: { opacity: 0, y: "100%" },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: "100%" },
+};
+
 export default function Chat({ socket, username, room }: ChatProps) {
+
     const [messages, setMessages] = useState<any>([]);
     const [newMessage, setNewMessage] = useState('');
+    const [isHovering, setIsHovering] = useState(false);
 
     useEffect(() => {
         socket.on('message', (message) => {
@@ -70,6 +80,12 @@ export default function Chat({ socket, username, room }: ChatProps) {
         }
     }, [socket, username]);
 
+    const handleEventMouseMessage = (name: string) => {
+        if (name === username) {
+            setIsHovering(true);
+        }
+    }
+
     return (
         <div>
             <NavBar />
@@ -77,9 +93,24 @@ export default function Chat({ socket, username, room }: ChatProps) {
                 <div className='flex-1 w-full h-full overflow-y-scroll p-4' >
                     {messages.map((msg: any, index: any) => (
                         <div
+                            onMouseEnter={(e) => handleEventMouseMessage(msg.autorDaMensagem)}
+                            onMouseLeave={() => setIsHovering(false)}
                             onDoubleClick={() => handleDeleteMessage(msg.id, msg.autorDaMensagem)}
                             key={index}
-                            className={`flex gap-3 p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
+                            className={`flex gap-3 relative p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
+                            {isHovering && username === msg.autorDaMensagem && (
+                                <motion.div
+                                    initial="initial"
+                                    animate={isHovering ? "animate" : "initial"}
+                                    exit="exit"
+                                    variants={variants}
+                                    transition={{ duration: 0.3 }}
+                                    className='absolute -top-4 right-1 bg-secondary p-2 rounded-sm'>
+                                    <div className='w-full h-full flex flex-row gap-3'>
+                                        <DotsHorizontalIcon width={20} height={20} />
+                                    </div>
+                                </motion.div>
+                            )}
                             <div className='flex flex-col'>
                                 <span className={`text-accent-foreground text-xs pt-1 flex ${username === msg.autorDaMensagem ? "justify-end" : "justify-start"} `}>
                                     {msg.autorDaMensagem}

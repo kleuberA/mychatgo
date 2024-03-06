@@ -3,10 +3,12 @@ import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, S
 import { Server, Socket } from 'socket.io';
 
 interface ChatMessage {
+  id: string;
   autorDaMensagem: string;
   message: string;
   room: string;
   time: string;
+  deleted: boolean;
 }
 
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -34,10 +36,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     this.logger.log(`Client id: ${socket.id} joined room: ${roomId}`);
 
     const welcomeMessage: ChatMessage = {
+      id: Math.random().toString(36).substr(2, 9),
       autorDaMensagem: 'System',
       message: 'Bem-vindo ao chat! Lembrando que este chat é temporário. Suas mensagens serão perdidas ao sair ou atualizar a página.',
       room: socket.id,
       time: new Date().toLocaleTimeString(),
+      deleted: false,
     };
     socket.emit('message', welcomeMessage);
 
@@ -63,6 +67,19 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.io.to(message.room).emit("message", data);
     } else {
       this.logger.warn(`Client id: ${client.id} is not in any room`);
+    }
+  }
+
+  @SubscribeMessage('delete_message')
+  deleteMessage(socket: Socket, messageId: string) {
+    this.logger.log(`Client id: ${socket.id} requested to delete message id: ${messageId}`);
+    const message = this.messages.find(msg => msg.id === messageId);
+    if (message) {
+      message.deleted = true;
+      message.message = 'Mensagem removida';
+      this.io.to(message.room).emit('delete_message', message);
+    } else {
+      this.logger.warn(`Client id: ${socket.id} requested to delete a non-existing message id: ${messageId}`);
     }
   }
 }

@@ -1,5 +1,5 @@
 "use client"
-import { DotsHorizontalIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
+import { DotsHorizontalIcon, FaceIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
 import React, { useState, useEffect, useCallback } from 'react';
 import { WarningCircle } from '@phosphor-icons/react';
 import { Socket } from 'socket.io-client';
@@ -7,6 +7,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import NavBar from './Navbar';
 import { motion } from 'framer-motion';
+import OptionsMessages from './OptionsMessages';
+import EmojiPicker from 'emoji-picker-react';
 
 interface ChatProps {
     socket: Socket;
@@ -25,6 +27,7 @@ export default function Chat({ socket, username, room }: ChatProps) {
     const [messages, setMessages] = useState<any>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isHovering, setIsHovering] = useState(false);
+    const [viewEmoji, setViewEmoji] = useState(false);
 
     useEffect(() => {
         socket.on('message', (message) => {
@@ -86,6 +89,11 @@ export default function Chat({ socket, username, room }: ChatProps) {
         }
     }
 
+    const handleEventMouseLeaveMessage = () => {
+        setIsHovering(false);
+        setViewEmoji(false);
+    }
+
     return (
         <div>
             <NavBar />
@@ -94,7 +102,7 @@ export default function Chat({ socket, username, room }: ChatProps) {
                     {messages.map((msg: any, index: any) => (
                         <div
                             onMouseEnter={(e) => handleEventMouseMessage(msg.autorDaMensagem)}
-                            onMouseLeave={() => setIsHovering(false)}
+                            onMouseLeave={() => handleEventMouseLeaveMessage()}
                             onDoubleClick={() => handleDeleteMessage(msg.id, msg.autorDaMensagem)}
                             key={index}
                             className={`flex gap-3 relative p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
@@ -106,8 +114,17 @@ export default function Chat({ socket, username, room }: ChatProps) {
                                     variants={variants}
                                     transition={{ duration: 0.3 }}
                                     className='absolute -top-4 right-1 bg-secondary p-2 rounded-sm'>
-                                    <div className='w-full h-full flex flex-row gap-3'>
-                                        <DotsHorizontalIcon width={20} height={20} />
+                                    <div className='w-full items-center flex flex-row gap-3'>
+                                        {/* <OptionsMessages /> */}
+                                        {!viewEmoji && (
+                                            <>
+                                                <FaceIcon width={20} height={20} onClick={() => setViewEmoji(!viewEmoji)} />
+                                                <DotsHorizontalIcon width={20} height={20} />
+                                            </>
+                                        )}
+                                        {viewEmoji && (
+                                            <EmojiPicker reactionsDefaultOpen onEmojiClick={(e) => console.log(e)} />
+                                        )}
                                     </div>
                                 </motion.div>
                             )}

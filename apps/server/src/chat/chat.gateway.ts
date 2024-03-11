@@ -9,6 +9,7 @@ interface ChatMessage {
   room: string;
   time: string;
   deleted: boolean;
+  emojis: Object[];
 }
 
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -42,6 +43,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       room: socket.id,
       time: new Date().toLocaleTimeString(),
       deleted: false,
+      emojis: []
     };
     socket.emit('message', welcomeMessage);
 
@@ -67,6 +69,18 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.io.to(message.room).emit("message", data);
     } else {
       this.logger.warn(`Client id: ${client.id} is not in any room`);
+    }
+  }
+
+  @SubscribeMessage('add_emoji')
+  addEmoji(socket: Socket, data: { messageId: string, emoji: {} }) {
+    this.logger.log(`Client id: ${socket.id} requested to add emoji to message id: ${data.messageId}`);
+    const message = this.messages.find(msg => msg.id === data.messageId);
+    if (message) {
+      message.emojis.push(data.emoji);
+      this.io.to(message.room).emit('add_emoji', message);
+    } else {
+      this.logger.warn(`Client id: ${socket.id} requested to add emoji to a non-existing message id: ${data.messageId}`);
     }
   }
 

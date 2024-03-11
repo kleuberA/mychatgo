@@ -2,13 +2,13 @@
 import { DotsHorizontalIcon, FaceIcon, PaperPlaneIcon } from '@radix-ui/react-icons';
 import React, { useState, useEffect, useCallback } from 'react';
 import { WarningCircle } from '@phosphor-icons/react';
+import OptionsMessages from './OptionsMessages';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 import { Socket } from 'socket.io-client';
+import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import NavBar from './Navbar';
-import { motion } from 'framer-motion';
-import OptionsMessages from './OptionsMessages';
-import EmojiPicker from 'emoji-picker-react';
 
 interface ChatProps {
     socket: Socket;
@@ -27,6 +27,7 @@ export default function Chat({ socket, username, room }: ChatProps) {
     const [messages, setMessages] = useState<any>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isHovering, setIsHovering] = useState(false);
+    const [hoveredMessageId, setHoveredMessageId] = useState(null);
     const [viewEmoji, setViewEmoji] = useState(false);
 
     useEffect(() => {
@@ -60,6 +61,7 @@ export default function Chat({ socket, username, room }: ChatProps) {
                 room,
                 time: time,
                 deleted: false,
+                emojis: []
             }
             await socket.emit('message', dataMessage);
             setNewMessage('');
@@ -83,16 +85,42 @@ export default function Chat({ socket, username, room }: ChatProps) {
         }
     }, [socket, username]);
 
-    const handleEventMouseMessage = (name: string) => {
+    const handleEventMouseMessage = (name: string, id: any) => {
         if (name === username) {
             setIsHovering(true);
+
         }
+        setHoveredMessageId(id);
     }
 
     const handleEventMouseLeaveMessage = () => {
         setIsHovering(false);
         setViewEmoji(false);
+        setHoveredMessageId(null);
     }
+
+    const handleSelectEmoji = useCallback(async (messageId: string, e: EmojiClickData) => {
+        let count = 1;
+        let emojiWithCount = { ...e, count };
+        await socket.emit('add_emoji', { messageId, emoji: emojiWithCount });
+
+        setMessages((prevMessages: any) => {
+            const updatedMessages = prevMessages.map((msg: any) => {
+                const existingEmoji = msg.emojis.find((emoji: any) => emoji.emoji === e.emoji);
+                if (username === msg.autorDaMensagem && existingEmoji) {
+                    return msg;
+                } else if (!existingEmoji || username !== msg.autorDaMensagem) {
+                    if (msg.id === messageId) {
+                        return { ...msg, emojis: [...msg.emojis, e] };
+                    }
+                }
+                return msg;
+            });
+            socket.emit('message', updatedMessages);
+            return updatedMessages;
+        })
+
+    }, [socket, username]);
 
     return (
         <div>
@@ -101,29 +129,26 @@ export default function Chat({ socket, username, room }: ChatProps) {
                 <div className='flex-1 w-full h-full overflow-y-scroll p-4' >
                     {messages.map((msg: any, index: any) => (
                         <div
-                            onMouseEnter={(e) => handleEventMouseMessage(msg.autorDaMensagem)}
+                            onMouseEnter={(e) => handleEventMouseMessage(msg.autorDaMensagem, msg.id)}
                             onMouseLeave={() => handleEventMouseLeaveMessage()}
                             onDoubleClick={() => handleDeleteMessage(msg.id, msg.autorDaMensagem)}
                             key={index}
                             className={`flex gap-3 relative p-1 ${username === msg.autorDaMensagem ? 'justify-end items-end' : 'justify-start items-start'}`}>
-                            {isHovering && username === msg.autorDaMensagem && (
+                            {hoveredMessageId === msg.id && (
                                 <motion.div
                                     initial="initial"
-                                    animate={isHovering ? "animate" : "initial"}
+                                    animate={hoveredMessageId === msg.id ? "animate" : "initial"}
                                     exit="exit"
                                     variants={variants}
                                     transition={{ duration: 0.3 }}
-                                    className='absolute -top-4 right-1 bg-secondary p-2 rounded-sm'>
+                                    className={`${username !== msg.autorDaMensagem && 'w-auto bg-transparent left-0'} absolute -top-4 right-1 bg-secondary p-2 rounded-sm`}>
                                     <div className='w-full items-center flex flex-row gap-3'>
-                                        {/* <OptionsMessages /> */}
-                                        {!viewEmoji && (
-                                            <>
-                                                <FaceIcon width={20} height={20} onClick={() => setViewEmoji(!viewEmoji)} />
-                                                <DotsHorizontalIcon width={20} height={20} />
-                                            </>
+                                        <FaceIcon width={20} height={20} onClick={() => setViewEmoji(!viewEmoji)} />
+                                        {username === msg.autorDaMensagem && !viewEmoji && (
+                                            <DotsHorizontalIcon width={20} height={20} />
                                         )}
                                         {viewEmoji && (
-                                            <EmojiPicker reactionsDefaultOpen onEmojiClick={(e) => console.log(e)} />
+                                            <EmojiPicker reactionsDefaultOpen onEmojiClick={(e) => handleSelectEmoji(msg.id, e)} />
                                         )}
                                     </div>
                                 </motion.div>
@@ -139,9 +164,18 @@ export default function Chat({ socket, username, room }: ChatProps) {
                                         </div>
                                     ) : msg.message}
                                 </span>
-                                <span className={`text-secondary-foreground text-xs pt-1 flex ${username === msg.autorDaMensagem ? "justify-end" : "justify-start"} `}>
-                                    {msg.time}
-                                </span>
+                                <div className={`text-secondary-foreground text-xs pt-1 flex flex-row ${msg.emojis.length !== 0 && 'gap-5'} ${username === msg.autorDaMensagem ? "justify-end" : "justify-start"} `}>
+                                    <div>
+                                        {msg.emojis.length !== 0 && (
+                                            <div className='flex flex-row gap-1'>
+                                                {msg.emojis.map((emoji: any, index: any) => (
+                                                    <span key={index} className='text-xs border border-border rounded-sm p-1 cursor-pointer transition-all duration-200 hover:bg-border'>{emoji.emoji} 1</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span>{msg.time}</span>
+                                </div>
                             </div>
                         </div>
                     ))}
